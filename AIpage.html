@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Biking in Shropshire</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <style>
+    .carousel-caption {
+      background: rgba(0, 0, 0, 0.5);
+      padding: 1rem;
+      border-radius: 10px;
+    }
+    .card img {
+      object-fit: cover;
+      height: 200px;
+      transition: transform 0.3s ease;
+    }
+    .card:hover img {
+      transform: scale(1.05);
+    }
+    .card {
+      transition: box-shadow 0.3s ease;
+      cursor: pointer;
+    }
+    .card:hover {
+      box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <!-- Header Carousel -->
+  <div id="bikeCarousel" class="carousel slide" data-bs-ride="carousel" aria-label="Biking in Shropshire Image Carousel">
+    <div class="carousel-inner">
+      <div class="carousel-item active">
+        <img loading="lazy" src="https://images.pexels.com/photos/90454/pexels-photo-90454.jpeg" class="d-block w-100" alt="Mountain biker riding on forest trail" />
+        <div class="carousel-caption d-none d-md-block">
+          <h1 class="display-4 fw-bold">Biking in Shropshire</h1>
+        </div>
+      </div>
+      <div class="carousel-item">
+        <img loading="lazy" src="https://images.pexels.com/photos/71104/utah-mountain-biking-bike-biking-71104.jpeg" class="d-block w-100" alt="Mountain biker on rocky trail" />
+      </div>
+      <div class="carousel-item">
+        <img loading="lazy" src="https://images.pexels.com/photos/1619299/pexels-photo-1619299.jpeg" class="d-block w-100" alt="Cyclist riding through nature path" />
+      </div>
+    </div>
+    <button class="carousel-control-prev" type="button" data-bs-target="#bikeCarousel" data-bs-slide="prev" aria-label="Previous Slide">
+      <span class="carousel-control-prev-icon"></span>
+    </button>
+    <button class="carousel-control-next" type="button" data-bs-target="#bikeCarousel" data-bs-slide="next" aria-label="Next Slide">
+      <span class="carousel-control-next-icon"></span>
+    </button>
+  </div>
+</header>
+
+<main>
+  <!-- Intro Text -->
+  <section class="container py-5 text-center">
+    <h2 class="mb-3">Explore the Trails of Shropshire</h2>
+    <p class="lead mx-auto" style="max-width: 700px;">Shropshire offers some of the UK's best off-road biking experiences—from scenic forest paths to technical mountain trails.</p>
+  </section>
+
+  <!-- Bike Cards -->
+  <section class="container pb-5">
+    <div class="row row-cols-1 row-cols-md-3 g-4">
+      <!-- Trail Bikes Card -->
+      <article class="col">
+        <div class="card h-100" tabindex="0" role="button" onclick="window.open('https://enduro-mtb.com/en/the-best-trail-bike-mtb-review/', '_blank')">
+          <img loading="lazy" src="Trailbike.jpg" class="card-img-top" alt="Trail bike parked near forest path" />
+          <div class="card-body">
+            <h5 class="card-title">Trail Bikes</h5>
+            <p class="card-text">Perfect for moderate terrain and forest paths.</p>
+            <a href="https://enduro-mtb.com/en/the-best-trail-bike-mtb-review/" target="_blank" rel="noopener noreferrer" class="btn btn-outline-primary">Explore Trail Bikes</a>
+          </div>
+        </div>
+      </article>
+
+      <!-- Enduro Bikes Card -->
+      <article class="col">
+        <div class="card h-100" tabindex="0" role="button" onclick="window.open('https://enduro-mtb.com/en/the-best-enduro-mtb-review/', '_blank')">
+          <img loading="lazy" src="endurobike.jpg" class="card-img-top" alt="Enduro bike on rocky mountain trail" />
+          <div class="card-body">
+            <h5 class="card-title">Enduro Bikes</h5>
+            <p class="card-text">Built for steep climbs and rocky descents.</p>
+            <a href="https://enduro-mtb.com/en/the-best-enduro-mtb-review/" target="_blank" rel="noopener noreferrer" class="btn btn-outline-primary">See Enduro Bikes</a>
+          </div>
+        </div>
+      </article>
+
+      <!-- Jump Bikes Card -->
+      <article class="col">
+        <div class="card h-100" tabindex="0" role="button" onclick="window.open('https://www.pinkbike.com/news/tags/dirtjump-bikes/', '_blank')">
+          <img loading="lazy" src="jumpbike.jpg" class="card-img-top" alt="Jump bike in mid-air on dirt track" />
+          <div class="card-body">
+            <h5 class="card-title">Jump Bikes</h5>
+            <p class="card-text">Ideal for dirt jumps, pump tracks, and technical tricks.</p>
+            <a href="https://www.pinkbike.com/news/tags/dirtjump-bikes/" target="_blank" rel="noopener noreferrer" class="btn btn-outline-primary">Discover Jump Bikes</a>
+          </div>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <!-- More Text -->
+  <section class="container pb-5">
+    <h3>Why Bike in Shropshire?</h3>
+    <p>Whether you're a seasoned rider or just getting started, Shropshire offers something for everyone. Ride through historic woodlands, take on thrilling downhill challenges, or enjoy peaceful countryside routes. Join a local biking group, rent high-performance gear, or check out upcoming events!</p>
+  </section>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
+
+
+
+
+
