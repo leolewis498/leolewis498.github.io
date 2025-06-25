@@ -1,271 +1,387 @@
-<!doctype html>
-<html lang="en-US">
-  <head>
-    <meta charset="utf-8" />
-    <title>Gamedev Canvas Workshop</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <style>
-      * {
-        padding: 0;
-        margin: 0;
-        box-sizing: border-box;
-      }
-      body {
-        font-family: sans-serif;
-        text-align: center;
-      }
-      canvas {
-        background: #eee;
-        display: block;
-        margin: 1rem auto;
-        width: 100%;
-        max-width: 480px;
-        height: auto;
-      }
-      #runButton {
-        padding: 10px 20px;
-        font-size: 16px;
-        margin: 10px auto;
-        display: block;
-      }
-      .touch-controls {
-        display: flex;
-        justify-content: center;
-        gap: 10px;
-        margin: 10px 0;
-      }
-      .touch-btn {
-        flex: 1;
-        padding: 15px 0;
-        font-size: 18px;
-        background-color: white;       /* changed to white background */
-        color: #0095DD;                /* blue text */
-        border: 2px solid #0095DD;    /* blue border */
-        border-radius: 5px;
-        user-select: none;             /* prevent text selection on tap */
-      }
-    </style>
-  </head>
-  <body>
-    <canvas id="myCanvas" width="480" height="320"></canvas>
-    <button id="runButton">Start game</button>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Brick Breaker with More Levels</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f0f0f0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      user-select: none;
+      -webkit-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+    }
+    #myCanvas {
+      background: #eee;
+      border: 1px solid #0095DD;
+      display: block;
+      margin: 20px auto;
+    }
+    #controls {
+      margin-bottom: 10px;
+    }
+    button {
+      font-size: 16px;
+      margin: 0 5px;
+      padding: 10px 20px;
+      cursor: pointer;
+    }
+    #overlay {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 48px;
+      color: red;
+      display: none;
+      pointer-events: none;
+      font-weight: bold;
+      background: rgba(255,255,255,0.8);
+      padding: 20px 40px;
+      border-radius: 10px;
+      user-select: none;
+    }
+    #touchControls {
+      display: flex;
+      justify-content: center;
+      margin-top: 10px;
+    }
+    #touchControls button {
+      width: 80px;
+      height: 50px;
+      font-size: 18px;
+      margin: 0 10px;
+      border-radius: 8px;
+      background-color: #0095DD;
+      color: white;
+      border: none;
+      user-select: none;
+    }
+  </style>
+</head>
+<body>
+  <div id="controls">
+    <button id="runButton">Start Game</button>
+    <button id="pauseButton">Pause</button>
+  </div>
+  <canvas id="myCanvas" width="480" height="320"></canvas>
+  <div id="overlay"></div>
+  <div id="touchControls">
+    <button id="leftBtn">◀️ Left</button>
+    <button id="rightBtn">Right ▶️</button>
+  </div>
 
-    <!-- Mobile touch controls -->
-    <div class="touch-controls">
-      <button class="touch-btn" id="leftBtn">⬅️</button>
-      <button class="touch-btn" id="rightBtn">➡️</button>
-    </div>
+  <script>
+    const canvas = document.getElementById("myCanvas");
+    const ctx = canvas.getContext("2d");
+    const runButton = document.getElementById("runButton");
+    const pauseButton = document.getElementById("pauseButton");
+    const overlay = document.getElementById("overlay");
 
-    <script>
-      const canvas = document.getElementById("myCanvas");
-      const ctx = canvas.getContext("2d");
-      const ballRadius = 10;
+    const ballRadius = 10;
+    const paddleHeight = 10;
+    let paddleWidth = 75;
+    const originalPaddleWidth = 75;
 
-      let x = canvas.width / 2;
-      let y = canvas.height - 30;
-      let dx = 2;
-      let dy = -2;
+    let x, y, dx, dy;
+    let paddleX;
+    let rightPressed = false;
+    let leftPressed = false;
 
-      const paddleHeight = 10;
-      const paddleWidth = 75;
+    let score = 0;
+    let lives = 3;
+    let level = 1;
+    let interval;
+    let paused = false;
 
-      let paddleX = (canvas.width - paddleWidth) / 2;
-      let rightPressed = false;
-      let leftPressed = false;
+    let bricks = [];
+    let brickRowCount = 5;
+    let brickColumnCount = 3;
+    const brickWidth = 75;
+    const brickHeight = 20;
+    const brickPadding = 10;
+    const brickOffsetTop = 30;
+    const brickOffsetLeft = 30;
 
-      let interval = 0;
+    let balls = [];
+    let powerUps = [];
+    const powerUpTypes = ["expand", "multi", "explosive", "life"];
 
-      const brickRowCount = 5;
-      const brickColumnCount = 3;
-      const brickWidth = 75;
-      const brickHeight = 20;
-      const brickPadding = 10;
-      const brickOffsetTop = 30;
-      const brickOffsetLeft = 30;
+    // Max rows and columns for bricks to keep it balanced
+    const maxBrickRowCount = 8;
+    const maxBrickColumnCount = 7;
 
-      let score = 0;
-      let bricks = [];
-      let lives = 3;
-
+    function initLevel() {
+      bricks = [];
       for (let c = 0; c < brickColumnCount; c++) {
         bricks[c] = [];
         for (let r = 0; r < brickRowCount; r++) {
           bricks[c][r] = { x: 0, y: 0, status: 1 };
         }
       }
+      balls = [{
+        x: canvas.width / 2,
+        y: canvas.height - 30,
+        dx: 1 + level * 0.3,
+        dy: -(1 + level * 0.3),
+        explosive: false
+      }];
+      paddleX = (canvas.width - paddleWidth) / 2;
+      powerUps = [];
+    }
 
-      document.addEventListener("keydown", keyDownHandler, false);
-      document.addEventListener("keyup", keyUpHandler, false);
-      document.addEventListener("mousemove", mouseMoveHandler, false);
-      document.addEventListener("touchmove", touchMoveHandler, false);
+    function spawnPowerUp(x, y) {
+      const type = powerUpTypes[Math.floor(Math.random() * powerUpTypes.length)];
+      powerUps.push({ x, y, dy: 2, type });
+    }
 
-      // Touch controls for buttons
-      document.getElementById("leftBtn").addEventListener("touchstart", () => { leftPressed = true; });
-      document.getElementById("leftBtn").addEventListener("touchend", () => { leftPressed = false; });
-      document.getElementById("rightBtn").addEventListener("touchstart", () => { rightPressed = true; });
-      document.getElementById("rightBtn").addEventListener("touchend", () => { rightPressed = false; });
+    function drawPowerUps() {
+      powerUps.forEach(p => {
+        ctx.beginPath();
+        ctx.fillStyle = {
+          expand: "green",
+          multi: "orange",
+          explosive: "red",
+          life: "purple"
+        }[p.type] || "gray";
+        ctx.fillRect(p.x, p.y, 20, 20);
+        ctx.fillStyle = "white";
+        ctx.font = "12px Arial";
+        ctx.fillText(p.type[0].toUpperCase(), p.x + 6, p.y + 14);
+        ctx.closePath();
+      });
+    }
 
-      function keyDownHandler(e) {
-        if (e.key === "Right" || e.key === "ArrowRight") {
-          rightPressed = true;
-        } else if (e.key === "Left" || e.key === "ArrowLeft") {
-          leftPressed = true;
+    function updatePowerUps() {
+      powerUps.forEach((p, index) => {
+        p.y += p.dy;
+        if (p.y + 20 > canvas.height - paddleHeight && p.x > paddleX && p.x < paddleX + paddleWidth) {
+          applyPowerUp(p.type);
+          powerUps.splice(index, 1);
+        } else if (p.y > canvas.height) {
+          powerUps.splice(index, 1);
         }
-      }
+      });
+    }
 
-      function keyUpHandler(e) {
-        if (e.key === "Right" || e.key === "ArrowRight") {
-          rightPressed = false;
-        } else if (e.key === "Left" || e.key === "ArrowLeft") {
-          leftPressed = false;
-        }
+    function applyPowerUp(type) {
+      switch (type) {
+        case "expand":
+          paddleWidth = 120;
+          setTimeout(() => paddleWidth = originalPaddleWidth, 10000);
+          break;
+        case "multi":
+          const newBalls = balls.map(b => ({ ...b }));
+          balls.push(...newBalls);
+          break;
+        case "explosive":
+          balls.forEach(b => b.explosive = true);
+          setTimeout(() => balls.forEach(b => b.explosive = false), 8000);
+          break;
+        case "life":
+          lives++;
+          break;
       }
+    }
 
-      function mouseMoveHandler(e) {
-        const relativeX = e.clientX - canvas.offsetLeft;
-        if (relativeX > 0 && relativeX < canvas.width) {
-          paddleX = relativeX - paddleWidth / 2;
-        }
-      }
-
-      function touchMoveHandler(e) {
-        e.preventDefault();
-        const touch = e.touches[0];
-        const relativeX = touch.clientX - canvas.offsetLeft;
-        if (relativeX > 0 && relativeX < canvas.width) {
-          paddleX = relativeX - paddleWidth / 2;
-        }
-      }
-
-      function collisionDetection() {
+    function collisionDetection() {
+      balls.forEach((ball) => {
         for (let c = 0; c < brickColumnCount; c++) {
           for (let r = 0; r < brickRowCount; r++) {
-            let b = bricks[c][r];
+            const b = bricks[c][r];
             if (b.status === 1) {
-              if (
-                x > b.x &&
-                x < b.x + brickWidth &&
-                y > b.y &&
-                y < b.y + brickHeight
-              ) {
-                dy = -dy;
+              if (ball.x > b.x && ball.x < b.x + brickWidth && ball.y > b.y && ball.y < b.y + brickHeight) {
                 b.status = 0;
                 score++;
-                if (score === brickRowCount * brickColumnCount) {
-                  alert("YOU WIN, CONGRATS!");
-                  document.location.reload();
+
+                // 20% chance to spawn power-up on brick break
+                if (Math.random() < 0.2) spawnPowerUp(b.x + brickWidth / 2, b.y + brickHeight);
+
+                if (ball.explosive) {
+                  destroySurroundingBricks(c, r);
+                }
+                ball.dy = -ball.dy;
+
+                // Check if all bricks cleared for level up
+                if (score === brickRowCount * brickColumnCount * level) {
+                  level++;
+                  // Increase bricks but limit to max
+                  brickRowCount = Math.min(maxBrickRowCount, brickRowCount + 1);
+                  brickColumnCount = Math.min(maxBrickColumnCount, brickColumnCount + 1);
+                  paddleWidth = originalPaddleWidth; // reset paddle width each level
+                  initLevel();
                 }
               }
             }
           }
         }
-      }
-
-      function drawBall() {
-        ctx.beginPath();
-        ctx.arc(x, y, ballRadius, 0, Math.PI * 2);
-        ctx.fillStyle = "#0095DD";
-        ctx.fill();
-        ctx.closePath();
-      }
-      function drawPaddle() {
-        ctx.beginPath();
-        ctx.rect(paddleX, canvas.height - paddleHeight, paddleWidth, paddleHeight);
-        ctx.fillStyle = "#0095DD";
-        ctx.fill();
-        ctx.closePath();
-      }
-      function drawBricks() {
-        for (let c = 0; c < brickColumnCount; c++) {
-          for (let r = 0; r < brickRowCount; r++) {
-            if (bricks[c][r].status === 1) {
-              const brickX = r * (brickWidth + brickPadding) + brickOffsetLeft;
-              const brickY = c * (brickHeight + brickPadding) + brickOffsetTop;
-              bricks[c][r].x = brickX;
-              bricks[c][r].y = brickY;
-              ctx.beginPath();
-              ctx.rect(brickX, brickY, brickWidth, brickHeight);
-              ctx.fillStyle = "#0095DD";
-              ctx.fill();
-              ctx.closePath();
-            }
-          }
-        }
-      }
-      function drawScore() {
-        ctx.font = "16px Arial";
-        ctx.fillStyle = "#0095DD";
-        ctx.fillText(`Score: ${score}`, 8, 20);
-        drawLives();
-      }
-      function drawLives() {
-        ctx.font = "16px Arial";
-        ctx.fillStyle = "#0095DD";
-        ctx.fillText(`Lives: ${lives}`, canvas.width - 65, 20);
-      }
-
-      function draw() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        drawBricks();
-        drawBall();
-        drawPaddle();
-        drawScore();
-        collisionDetection();
-
-        if (x + dx > canvas.width - ballRadius || x + dx < ballRadius) {
-          dx = -dx;
-        }
-        if (y + dy < ballRadius) {
-          dy = -dy;
-        } else if (y + dy > canvas.height - ballRadius) {
-          if (x > paddleX && x < paddleX + paddleWidth) {
-            dy = -dy;
-          } else {
-            lives--;
-            if (!lives) {
-              alert("GAME OVER");
-              document.location.reload();
-            } else {
-              x = canvas.width / 2;
-              y = canvas.height - 30;
-              dx = 2;
-              dy = -2;
-              paddleX = (canvas.width - paddleWidth) / 2;
-              requestAnimationFrame(draw);
-            }
-          }
-        }
-
-        if (rightPressed && paddleX < canvas.width - paddleWidth) {
-          paddleX += 7;
-        } else if (leftPressed && paddleX > 0) {
-          paddleX -= 7;
-        }
-
-        x += dx;
-        y += dy;
-      }
-
-      function startGame() {
-        interval = setInterval(draw, 10);
-        draw();
-      }
-
-      const runButton = document.getElementById("runButton");
-      runButton.addEventListener("click", () => {
-        startGame();
-        runButton.disabled = true;
       });
-    </script>
+    }
 
-    <!-- Home Button -->
-    <div style="margin: 2rem 0;">
-      <a href="index.html" style="background-color: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Go to Home</a>
-    </div>
+    function destroySurroundingBricks(c, r) {
+      for (let dc = -1; dc <= 1; dc++) {
+        for (let dr = -1; dr <= 1; dr++) {
+          const nc = c + dc;
+          const nr = r + dr;
+          if (bricks[nc] && bricks[nc][nr] && bricks[nc][nr].status === 1) {
+            bricks[nc][nr].status = 0;
+            score++;
+          }
+        }
+      }
+    }
 
-  </body>
+    function drawBall(ball) {
+      ctx.beginPath();
+      ctx.arc(ball.x, ball.y, ballRadius, 0, Math.PI * 2);
+      ctx.fillStyle = ball.explosive ? "red" : "#0095DD";
+      ctx.fill();
+      ctx.closePath();
+    }
+
+    function drawPaddle() {
+      ctx.beginPath();
+      ctx.rect(paddleX, canvas.height - paddleHeight, paddleWidth, paddleHeight);
+      ctx.fillStyle = "#0095DD";
+      ctx.fill();
+      ctx.closePath();
+    }
+
+    function drawBricks() {
+      for (let c = 0; c < brickColumnCount; c++) {
+        for (let r = 0; r < brickRowCount; r++) {
+          if (bricks[c][r].status === 1) {
+            const brickX = r * (brickWidth + brickPadding) + brickOffsetLeft;
+            const brickY = c * (brickHeight + brickPadding) + brickOffsetTop;
+            bricks[c][r].x = brickX;
+            bricks[c][r].y = brickY;
+            ctx.beginPath();
+            ctx.rect(brickX, brickY, brickWidth, brickHeight);
+            ctx.fillStyle = "#0095DD";
+            ctx.fill();
+            ctx.closePath();
+          }
+        }
+      }
+    }
+
+    function drawScore() {
+      ctx.font = "16px Arial";
+      ctx.fillStyle = "#0095DD";
+      ctx.fillText(`Score: ${score}`, 8, 20);
+      ctx.fillText(`Lives: ${lives}`, canvas.width - 65, 20);
+      ctx.fillText(`Level: ${level}`, canvas.width / 2 - 30, 20);
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      drawBricks();
+      balls.forEach(drawBall);
+      drawPaddle();
+      drawPowerUps();
+      drawScore();
+      collisionDetection();
+      updatePowerUps();
+
+      balls.forEach((ball, index) => {
+        if (ball.x + ball.dx > canvas.width - ballRadius || ball.x + ball.dx < ballRadius) ball.dx = -ball.dx;
+        if (ball.y + ball.dy < ballRadius) ball.dy = -ball.dy;
+        else if (ball.y + ball.dy > canvas.height - ballRadius) {
+          if (ball.x > paddleX && ball.x < paddleX + paddleWidth) ball.dy = -ball.dy;
+          else {
+            balls.splice(index, 1);
+            if (balls.length === 0) {
+              lives--;
+              if (!lives) {
+                clearInterval(interval);
+                overlay.style.display = "flex";
+                overlay.textContent = "GAME OVER";
+                return;
+              } else {
+                balls = [{
+                  x: canvas.width / 2,
+                  y: canvas.height - 30,
+                  dx: 1 + level * 0.3,
+                  dy: -(1 + level * 0.3),
+                  explosive: false
+                }];
+                paddleX = (canvas.width - paddleWidth) / 2;
+              }
+            }
+          }
+        }
+
+        if (rightPressed && paddleX < canvas.width - paddleWidth) paddleX += 7;
+        else if (leftPressed && paddleX > 0) paddleX -= 7;
+
+        ball.x += ball.dx;
+        ball.y += ball.dy;
+      });
+    }
+
+    function startGame() {
+      level = 1;
+      score = 0;
+      lives = 3;
+      paddleWidth = originalPaddleWidth;
+      brickRowCount = 5;
+      brickColumnCount = 3;
+      overlay.style.display = "none";
+      initLevel();
+      interval = setInterval(draw, 10);
+      runButton.disabled = true;
+      pauseButton.disabled = false;
+      paused = false;
+      pauseButton.textContent = "Pause";
+    }
+
+    runButton.addEventListener("click", startGame);
+    pauseButton.addEventListener("click", () => {
+      if (paused) {
+        interval = setInterval(draw, 10);
+        paused = false;
+        pauseButton.textContent = "Pause";
+      } else {
+        clearInterval(interval);
+        paused = true;
+        pauseButton.textContent = "Resume";
+      }
+    });
+
+    document.addEventListener("keydown", e => {
+      if (e.key === "Right" || e.key === "ArrowRight") rightPressed = true;
+      else if (e.key === "Left" || e.key === "ArrowLeft") leftPressed = true;
+    });
+    document.addEventListener("keyup", e => {
+      if (e.key === "Right" || e.key === "ArrowRight") rightPressed = false;
+      else if (e.key === "Left" || e.key === "ArrowLeft") leftPressed = false;
+    });
+    document.addEventListener("mousemove", e => {
+      const relativeX = e.clientX - canvas.offsetLeft;
+      if (relativeX > 0 && relativeX < canvas.width) {
+        paddleX = relativeX - paddleWidth / 2;
+      }
+    });
+    document.addEventListener("touchmove", e => {
+      e.preventDefault();
+      const touch = e.touches[0];
+      const relativeX = touch.clientX - canvas.offsetLeft;
+      if (relativeX > 0 && relativeX < canvas.width) {
+        paddleX = relativeX - paddleWidth / 2;
+      }
+    });
+
+    document.getElementById("leftBtn").addEventListener("touchstart", () => { leftPressed = true; });
+    document.getElementById("leftBtn").addEventListener("touchend", () => { leftPressed = false; });
+    document.getElementById("rightBtn").addEventListener("touchstart", () => { rightPressed = true; });
+    document.getElementById("rightBtn").addEventListener("touchend", () => { rightPressed = false; });
+  </script>
+</body>
 </html>
-
-
-
 
