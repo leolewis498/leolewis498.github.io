@@ -143,7 +143,7 @@ function drawScore() {
   ctx.font = "16px Arial";
   ctx.fillStyle = "#0095DD";
   ctx.fillText(`Score: ${score}`, 8, 20);
-drawLives();
+  drawLives();
 }
 function drawLives() {
   ctx.font = "16px Arial";
@@ -169,19 +169,18 @@ function draw() {
     if (x > paddleX && x < paddleX + paddleWidth) {
       dy = -dy;
     } else {
-lives--;
-if (!lives) {
-  alert("GAME OVER");
-  document.location.reload();
-} else {
-  x = canvas.width / 2;
-  y = canvas.height - 30;
-  dx = 2;
-  dy = -2;
-  paddleX = (canvas.width - paddleWidth) / 2;
-requestAnimationFrame(draw);
-}
-
+      lives--;
+      if (!lives) {
+        alert("GAME OVER");
+        document.location.reload();
+      } else {
+        x = canvas.width / 2;
+        y = canvas.height - 30;
+        dx = 2;
+        dy = -2;
+        paddleX = (canvas.width - paddleWidth) / 2;
+        requestAnimationFrame(draw);
+      }
     }
   }
 
@@ -198,7 +197,6 @@ requestAnimationFrame(draw);
 function startGame() {
   interval = setInterval(draw, 10);
   draw();
-
 }
 
 const runButton = document.getElementById("runButton");
@@ -206,8 +204,13 @@ runButton.addEventListener("click", () => {
   startGame();
   runButton.disabled = true;
 });
+</script>
 
-    </script>
-   
-  </body>
+<!-- New button to go back to home -->
+<div class="text-center my-4" style="text-align: center; margin: 2rem 0;">
+  <a href="index.html" class="btn btn-primary" style="background-color: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Go to Home</a>
+</div>
+
+</body>
 </html>
+
